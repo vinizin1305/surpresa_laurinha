@@ -1,0 +1,292 @@
+<!doctype html>
+
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Para Laura — Carta Interativa</title>
+  <style>
+    :root{
+      --bg:#2b0b3a; /* deep purple */
+      --paper:#fffdf7;
+      --accent:#8a39d6;
+      --shadow: rgba(0,0,0,0.35);
+      --text:#1a1320;
+      --glass: rgba(255,255,255,0.06);
+      --card-w: min(880px, 92vw);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;font-family:Inter, system-ui, -apple-system, "Helvetica Neue", Arial;color:var(--text);background:linear-gradient(180deg,var(--bg),#3b0f57);-webkit-font-smoothing:antialiased;display:flex;align-items:center;justify-content:center}/* Stage */
+.stage{width:100%;height:100%;display:flex;align-items:center;justify-content:center;padding:48px}
+
+/* Envelope button */
+.envelope-btn{width:180px;height:120px;background:linear-gradient(180deg,#ffdfe8,#ffd0ef);border-radius:12px;position:relative;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 12px 30px var(--shadow);transform-origin:center;transition:transform .35s cubic-bezier(.2,.9,.2,1)}
+.envelope-btn:active{transform:scale(.98)}
+.envelope-flap{position:absolute;top:8px;left:50%;transform:translateX(-50%);width:86%;height:56%;background:linear-gradient(180deg,#ffe7f3,#ffd7eb);clip-path:polygon(0 0,100% 0,50% 100%);border-radius:6px;box-shadow:inset 0 -6px 18px rgba(0,0,0,.06)}
+.envelope-body{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);width:92%;height:58%;background:#fff;border-radius:8px}
+.envelope-seal{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:54px;height:54px;border-radius:50%;background:radial-gradient(circle at 35% 25%,#fff,#ffcedf 40%, #ffb0d9 70%);display:flex;align-items:center;justify-content:center;font-weight:700;color:#6b1848;box-shadow:0 6px 18px rgba(0,0,0,.15)}
+.envelope-label{position:absolute;bottom:-36px;left:50%;transform:translateX(-50%);color:#fff;font-weight:600;letter-spacing:.6px}
+
+/* Hidden stage for the letter */
+.letter-wrap{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:50;pointer-events:none;opacity:0}
+.letter-wrap.show{pointer-events:auto;opacity:1}
+
+/* Paper / card */
+.paper{width:var(--card-w);max-width:92vw;height:min(560px,72vh);background:var(--paper);border-radius:16px;box-shadow:0 30px 80px rgba(0,0,0,.45);position:relative;transform-origin:center;overflow:hidden}
+
+/* folded corners (visual effect) */
+.paper::before,.paper::after{content:"";position:absolute;width:110px;height:110px;background:linear-gradient(135deg,rgba(0,0,0,.02),transparent);right:0;bottom:0;transform:rotate(180deg);border-bottom-left-radius:20px}
+.paper::after{left:0;top:0;right:auto;bottom:auto;transform:rotate(0deg);border-top-right-radius:20px}
+
+/* Inner content area */
+.paper-inner{padding:44px 64px;height:100%;overflow:hidden;display:flex;flex-direction:column}
+.paper-header{display:flex;align-items:center;gap:12px}
+.heart-ico{width:36px;height:36px;border-radius:8px;background:linear-gradient(180deg,#ffc8f0,#ffb3ea);display:flex;align-items:center;justify-content:center;font-size:18px}
+h1{margin:0;font-size:22px;color:var(--accent)}
+.page{flex:1;display:flex;flex-direction:column;gap:18px;align-items:flex-start;justify-content:center;transition:transform .36s cubic-bezier(.2,.9,.2,1);touch-action:none}
+.page p{margin:0;font-size:18px;line-height:1.6;color:#2a2030}
+
+/* page controls */
+.controls{display:flex;gap:12px;align-items:center;margin-top:16px}
+.btn{padding:10px 14px;border-radius:12px;background:var(--accent);color:white;font-weight:600;border:none;cursor:pointer;box-shadow:0 8px 18px rgba(138,57,214,.18)}
+
+/* small page indicator */
+.pager{position:absolute;bottom:18px;left:50%;transform:translateX(-50%);display:flex;gap:8px}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--glass);opacity:.6}
+.dot.active{background:var(--accent);opacity:1;box-shadow:0 6px 18px rgba(138,57,214,.18)}
+
+/* initial enter animation */
+.zoom-in{animation:zoomIn .9s cubic-bezier(.2,.9,.2,1) forwards}
+@keyframes zoomIn{0%{transform:scale(.35) translateY(10vh);opacity:0}70%{transform:scale(1.02)}100%{transform:scale(1);opacity:1}}
+
+/* envelope to paper morph (simple approximation) */
+.morph-to-paper{animation:morph .7s ease forwards}
+@keyframes morph{0%{transform:scale(1) translateY(0);opacity:1}100%{transform:scale(20) translateY(-8vh);opacity:0}}
+
+/* draggable clue */
+.drag-hint{position:absolute;right:18px;top:18px;font-size:13px;color:#6a596b;opacity:.9}
+
+/* responsive tweaks */
+@media (max-width:720px){
+  .envelope-btn{width:140px;height:96px}
+  .paper-inner{padding:24px}
+  .page p{font-size:16px}
+}
+
+  </style>
+</head>
+<body>
+  <div class="stage">
+    <div id="envelope" class="envelope-btn" aria-label="Abrir carta">
+      <div class="envelope-flap"></div>
+      <div class="envelope-body"></div>
+      <div class="envelope-seal">V</div>
+      <div class="envelope-label">Para Laura</div>
+    </div>
+  </div>  <!-- Letter area (hidden until envelope opens) -->  <div id="letterWrap" class="letter-wrap" role="dialog" aria-modal="true">
+    <div id="paper" class="paper zoom-in" role="document">
+      <div class="paper-inner">
+        <div class="paper-header">
+          <div class="heart-ico">❤</div>
+          <h1>Para Laura — Uma carta do Vini</h1>
+        </div><div id="pages" class="page" draggable="false">
+      <!-- pages inserted by JS -->
+    </div>
+
+    <div class="controls" style="justify-content:space-between;align-items:center">
+      <div class="left">
+        <button id="prevBtn" class="btn" style="background:transparent;color:var(--accent);box-shadow:none;border:1px solid rgba(0,0,0,0.06)">Anterior</button>
+      </div>
+      <div class="right">
+        <button id="nextBtn" class="btn">Próximo</button>
+      </div>
+    </div>
+
+    <div class="pager" id="pager"></div>
+    <div class="drag-hint">Arraste a carta para avançar</div>
+  </div>
+</div>
+
+  </div>  <script>
+    /* --- Text parts (from Vini) --- */
+    const textParts = [
+      {
+        title: 'Abertura',
+        body: `Oi, Laura 💜\n\nEu precisava te escrever isso de um jeito especial. Só pra você saber o quanto eu gosto de estar ao seu lado, o quanto cada momento contigo é único e deixa minha vida mais leve. Estar com você é simplesmente uma das melhores coisas que já me aconteceram.`
+      },
+      {
+        title: 'Saudade',
+        body: `Eu tô com muitas saudades de você. Sinto falta da tua presença, do jeito que você fala, das conversas, das risadas… de tudo. Parece que quando você não tá por perto, falta uma parte importante do meu dia. E isso só mostra o quanto você é especial pra mim.`
+      },
+      {
+        title: 'Coisas boas',
+        body: `Eu desejo sempre tudo de bom pra você. Que cada sonho que você tem se torne realidade, que a felicidade nunca te falte, que a vida te dê sempre motivos pra sorrir. Porque você merece o melhor, e eu quero estar sempre por perto pra ver cada conquista tua.`
+      },
+      {
+        title: 'Conclusão',
+        body: `Essa carta é só um pedacinho do que sinto. Talvez eu nunca consiga colocar tudo em palavras, mas quero que você saiba que eu tô aqui, e que estar contigo é um presente que eu não trocaria por nada. 💌\n\n— Vini`
+      }
+    ];
+
+    // DOM
+    const envelope = document.getElementById('envelope');
+    const letterWrap = document.getElementById('letterWrap');
+    const pagesEl = document.getElementById('pages');
+    const pager = document.getElementById('pager');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const paper = document.getElementById('paper');
+
+    // build pages
+    let currentIndex = 0;
+    function renderPages(){
+      pagesEl.innerHTML = '';
+      pager.innerHTML = '';
+      textParts.forEach((p, i) => {
+        const container = document.createElement('div');
+        container.className = 'single';
+        container.style.width = '100%';
+        container.style.minHeight = '240px';
+        container.style.paddingRight = '12px';
+        container.style.boxSizing = 'border-box';
+        container.style.display = (i===currentIndex)?'flex':'none';
+        container.style.flexDirection = 'column';
+
+        const h = document.createElement('h2');
+        h.textContent = p.title;
+        h.style.margin = '0 0 8px 0';
+        h.style.color = '#53204a';
+        h.style.fontSize = '20px';
+
+        const pEl = document.createElement('p');
+        pEl.textContent = p.body;
+
+        container.appendChild(h);
+        container.appendChild(pEl);
+        pagesEl.appendChild(container);
+
+        const dot = document.createElement('div');
+        dot.className = 'dot' + (i===currentIndex?' active':'');
+        pager.appendChild(dot);
+      });
+
+      updateButtons();
+    }
+
+    function updateButtons(){
+      prevBtn.disabled = currentIndex === 0;
+      nextBtn.textContent = currentIndex === textParts.length -1 ? 'Fechar' : 'Próximo';
+      Array.from(pager.children).forEach((d, i)=> d.classList.toggle('active', i===currentIndex));
+    }
+
+    function showNext(){
+      if(currentIndex < textParts.length -1){
+        animatePageChange(currentIndex, currentIndex+1, 'left');
+        currentIndex++;
+        renderPages();
+      } else {
+        closeLetter();
+      }
+    }
+    function showPrev(){
+      if(currentIndex > 0){
+        animatePageChange(currentIndex, currentIndex-1, 'right');
+        currentIndex--;
+        renderPages();
+      }
+    }
+
+    // envelope click -> morph animation -> show paper
+    envelope.addEventListener('click', async ()=>{
+      envelope.classList.add('morph-to-paper');
+      // small delay so morph looks smooth
+      await new Promise(r => setTimeout(r, 680));
+      // show letter overlay
+      letterWrap.classList.add('show');
+      // subtle pop
+      paper.classList.add('zoom-in');
+      // hide envelope (or keep for effect)
+      envelope.style.display = 'none';
+      renderPages();
+    });
+
+    // page animations (slide)
+    function animatePageChange(from, to, dir){
+      const nodes = pagesEl.children;
+      const fromNode = nodes[from];
+      const toNode = nodes[to];
+      if(!fromNode || !toNode) return;
+      // prepare
+      toNode.style.display = 'flex';
+      toNode.style.transform = `translateX(${dir==='left'? '40px':'-40px'})`;
+      toNode.style.opacity = 0;
+      // animate
+      requestAnimationFrame(()=>{
+        fromNode.style.transition = 'transform .36s ease, opacity .36s ease';
+        toNode.style.transition = 'transform .36s ease, opacity .36s ease';
+        fromNode.style.transform = `translateX(${dir==='left'? '-40px':'40px'})`;
+        fromNode.style.opacity = 0;
+        toNode.style.transform = 'translateX(0px)';
+        toNode.style.opacity = 1;
+        setTimeout(()=>{ fromNode.style.display = 'none'; fromNode.style.transform=''; fromNode.style.opacity=''; }, 360);
+      });
+    }
+
+    // drag to go to next page (vertical drag on the paper)
+    let startY = null; let dragging = false;
+    paper.addEventListener('pointerdown', (e)=>{
+      startY = e.clientY; dragging = true; paper.setPointerCapture(e.pointerId);
+    });
+    paper.addEventListener('pointermove', (e)=>{
+      if(!dragging || startY===null) return;
+      const dy = e.clientY - startY;
+      paper.style.transform = `translateY(${dy}px)`;
+      paper.style.transition = 'transform 0s';
+    });
+    paper.addEventListener('pointerup', (e)=>{
+      dragging = false; paper.releasePointerCapture(e.pointerId);
+      paper.style.transition = 'transform .38s cubic-bezier(.2,.9,.2,1)';
+      const dy = e.clientY - startY;
+      paper.style.transform = '';
+      if(dy < -80){ // dragged up -> next
+        showNext();
+      } else if(dy > 80){ // dragged down -> prev
+        showPrev();
+      }
+      startY = null;
+    });
+    paper.addEventListener('pointercancel', ()=>{ dragging=false; startY=null; paper.style.transform=''; });
+
+    // buttons
+    nextBtn.addEventListener('click', showNext);
+    prevBtn.addEventListener('click', showPrev);
+
+    function closeLetter(){
+      letterWrap.classList.remove('show');
+      // bring envelope back
+      envelope.style.display = 'flex';
+      envelope.classList.remove('morph-to-paper');
+      currentIndex = 0;
+      renderPages();
+    }
+
+    // small accessibility: allow keyboard arrows
+    window.addEventListener('keydown', (e)=>{
+      if(!letterWrap.classList.contains('show')) return;
+      if(e.key === 'ArrowRight' || e.key === 'Enter') showNext();
+      if(e.key === 'ArrowLeft') showPrev();
+      if(e.key === 'Escape') closeLetter();
+    });
+
+    // touch friendly: tap on right/left halves
+    paper.addEventListener('click', (e)=>{
+      const rect = paper.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      if(x > rect.width * 0.66) showNext();
+      else if(x < rect.width * 0.33) showPrev();
+    });
+
+    // initial render (in case user prefers to pre-load)
+    renderPages();
+  </script></body>
+</html>
