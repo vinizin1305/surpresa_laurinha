@@ -32,18 +32,18 @@ html, body {
   align-items: center;
   justify-content: center;
 }
+/* Envelope estilo botão */
 .envelope-btn {
-  width: 200px;
+  width: 220px;
   height: 140px;
   background: linear-gradient(180deg,#ffcce3,#ffb3d9);
-  border-radius: 16px;
+  border-radius: 20px;
   position: relative;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   box-shadow: 0 12px 30px var(--shadow);
-  transform-origin: center;
   transition: transform 0.5s ease;
 }
 .envelope-flap {
@@ -55,7 +55,7 @@ html, body {
   height: 60%;
   background: linear-gradient(180deg,#ffd7eb,#ffb0d9);
   clip-path: polygon(0 0,100% 0,50% 100%);
-  border-radius: 8px;
+  border-radius: 10px;
 }
 .envelope-body {
   position: absolute;
@@ -65,7 +65,7 @@ html, body {
   width: 92%;
   height: 60%;
   background: var(--paper);
-  border-radius: 12px;
+  border-radius: 14px;
   box-shadow: inset 0 -6px 18px rgba(0,0,0,0.05);
 }
 .envelope-seal {
@@ -73,15 +73,15 @@ html, body {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 56px;
-  height: 56px;
+  width: 60px;
+  height: 60px;
   border-radius: 50%;
   background: radial-gradient(circle at 35% 25%,#fff,#ffcedf 40%, #ffb0d9 70%);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 700;
-  color: #6b1848;
+  font-size: 24px;
+  color: #e74c88;
   box-shadow: 0 6px 18px rgba(0,0,0,0.15);
 }
 .letter-wrap {
@@ -146,7 +146,7 @@ html, body {
   <div id="envelope" class="envelope-btn">
     <div class="envelope-flap"></div>
     <div class="envelope-body"></div>
-    <div class="envelope-seal">V</div>
+    <div class="envelope-seal">❤</div>
   </div>
 </div>
 <div id="letterWrap" class="letter-wrap">
@@ -168,9 +168,8 @@ function renderPages(){ pagesEl.innerHTML = ''; textParts.forEach((text, i)=>{ c
 
 function showPage(index){ const children = pagesEl.children; for(let i=0;i<children.length;i++){ children[i].style.display = i===index?'block':'none'; } currentIndex = index; }
 
-envelope.addEventListener('click', async ()=>{ envelope.style.transition = 'transform 0.5s ease'; envelope.style.transform = 'scale(20)'; await new Promise(r => setTimeout(r, 500)); envelope.style.display='none'; letterWrap.classList.add('show'); paper.classList.add('open'); renderPages(); });
+envelope.addEventListener('click', async ()=>{ envelope.style.transition = 'transform 0.5s ease, opacity 0.5s ease'; envelope.style.transform = 'scale(1.5)'; envelope.style.opacity = '0'; await new Promise(r => setTimeout(r, 500)); envelope.style.display='none'; letterWrap.classList.add('show'); paper.classList.add('open'); renderPages(); });
 
-let startY = null; let dragging = false; paper.addEventListener('pointerdown',(e)=>{ startY=e.clientY; dragging=true; paper.setPointerCapture(e.pointerId); }); paper.addEventListener('pointermove',(e)=>{ if(!dragging || startY===null) return; const dy = e.clientY - startY; paper.style.transform = translateY(${dy}px) scale(1); }); paper.addEventListener('pointerup',(e)=>{ if(!dragging) return; dragging=false; const dy = e.clientY - startY; paper.style.transition='transform 0.3s ease'; paper.style.transform='scale(1)'; if(dy < -60 && currentIndex<textParts.length-1){ showPage(currentIndex+1); } else if(dy>60 && currentIndex>0){ showPage(currentIndex-1); } startY=null; }); paper.addEventListener('pointercancel',()=>{ dragging=false; startY=null; paper.style.transform='scale(1)'; }); </script>
+let startY = null; let dragging = false; paper.addEventListener('pointerdown',(e)=>{ startY=e.clientY; dragging=true; paper.setPointerCapture(e.pointerId); }); paper.addEventListener('pointermove',(e)=>{ if(!dragging || startY===null) return; const dy = e.clientY - startY; paper.style.transform = translateY(${dy}px) scale(1); }); paper.addEventListener('pointerup',(e)=>{ if(!dragging) return; dragging=false; const dy = e.clientY - startY; paper.style.transition='transform 0.3s ease'; paper.style.transform='scale(1)'; if(dy < -60
 
-</body>
-</html>
+  
